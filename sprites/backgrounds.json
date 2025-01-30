@@ -1,0 +1,65 @@
+{
+    // Format (zone)(act)_(layernumber)
+    // Rendered in ascending order. 1 is furthest. Last is nearest to the camera
+    "aiz1_1": { "File": "mhz.png" },
+    "aiz2_1": { "File": "mhz_2.png" },
+	
+    "hcz1_1": { "File": "hcz.png" },
+	"hcz2_1": { "File": "hcz_2.png" },
+
+	"mgz1_1": { "File": "parallax/mgz_1.png" },
+    "mgz1_2": { "File": "parallax/mgz_2.png" },
+    "mgz1_3": { "File": "parallax/mgz_3.png" },
+    "mgz1_4": { "File": "parallax/mgz_4.png" },
+    "mgz1_5": { "File": "parallax/mgz_5.png" },
+    "mgz1_6": { "File": "parallax/mgz_6.png" },
+
+    "mgz2_1": { "File": "parallax/mgz_1.png" },
+    "mgz2_2": { "File": "parallax/mgz_2.png" },
+    "mgz2_3": { "File": "parallax/mgz_3.png" },
+    "mgz2_4": { "File": "parallax/mgz_4.png" },
+    "mgz2_5": { "File": "parallax/mgz_5.png" },
+    "mgz2_6": { "File": "parallax/mgz_6.png" },
+
+    "cnz1_1": { "File": "parallax/cnz_1.png" },
+    "cnz1_2": { "File": "parallax/cnz_2.png" },
+    "cnz1_3": { "File": "parallax/cnz_3.png" },
+    "cnz1_4": { "File": "parallax/cnz_4.png" },
+    "cnz1_5": { "File": "parallax/cnz_5.png" },
+
+    "cnz2_1": { "File": "parallax/cnz_1.png" },
+    "cnz2_2": { "File": "parallax/cnz_2.png" },
+    "cnz2_3": { "File": "parallax/cnz_3.png" },
+    "cnz2_4": { "File": "parallax/cnz_4.png" },
+    "cnz2_5": { "File": "parallax/cnz_5.png" },
+
+	"icz1_1": { "File": "icz.png" },
+	"icz2_1": { "File": "icz_2.png" },
+	"lbz1_1": { "File": "lbz.png" },
+	"lbz2_1": { "File": "lbz_2.png" },
+
+    "mhz1_1": { "File": "parallax/forest_1.png" },
+    "mhz1_2": { "File": "parallax/forest_2.png" },
+    "mhz1_3": { "File": "parallax/forest_3.png" },
+    "mhz1_4": { "File": "parallax/forest_4.png" },
+
+    "mhz2_1": { "File": "parallax/forest_1.png" },
+    "mhz2_2": { "File": "parallax/forest_2.png" },
+    "mhz2_3": { "File": "parallax/forest_3.png" },
+    "mhz2_4": { "File": "parallax/forest_4.png" },
+	
+    "fbz1_1": { "File": "fbz.png" },
+	"fbz2_1": { "File": "fbz_2.png" },
+	"soz1_1": { "File": "soz.png" },
+	"soz2_1": { "File": "soz_2.png" },
+	"lrz1_1": { "File": "lrz.png" },
+	"lrz2_1": { "File": "lrz_2.png" },
+	"hpz1_1": { "File": "hpz.png" },
+	"hpz2_1": { "File": "hpz_2.png" },
+	"ssz1_1": { "File": "ssz.png" },
+	"ssz2_1": { "File": "ssz_2.png" },
+	"dez1_1": { "File": "dez.png" },
+	"dez2_1": { "File": "dez_2.png" },
+	"ddz1_1": { "File": "ddz.png" },
+	"ddz2_1": { "File": "ddz_2.png" }
+}

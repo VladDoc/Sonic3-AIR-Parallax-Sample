@@ -1,0 +1,276 @@
+//# script-feature-level(2)
+
+// BG rendering
+//# address-hook(0x00db44) end(0x00dbb2)
+function void RenderHUD()
+{
+	base.RenderHUD()
+	DrawDemBgs()
+}
+
+// MGZ act 2 boss fight hook(to potentially hack in scrolling while boss fight)
+// Annoying part is that it triggers right when you enter the boss not when the flying section starts
+// So you would need to wait N seconds before signaling that bg is now should scroll based on time/frame counter
+//# address-hook(0x01c96e) end(0x01c9c6)
+function void fn01c96e()
+{
+    base.fn01c96e()
+    debugLog("kekes")
+}
+
+// This expects internal zone index
+function s16 getZoneActBG(u16 zoneAndAct)
+{
+    u16 zone = zoneAndAct >> 8
+    u16 act = (zoneAndAct & 0x01)
+
+    //debugLog("zone")
+    //debugLog(zone)
+    //debugLog("act")
+    //debugLog(act)
+
+    // if you change the mapping here and in getZoneActInitials2
+    // you can reuse other zones bg's without duplicating all the data required
+    // nifty for lazy asses
+
+    //if(zone == 0x03)
+    //    return 1 + (2 * 2)
+
+    // hidden palace (act 1 is boss battle, act 2 is actual level)
+    if (zone == 0x16)
+		return act + (13 * 2)
+    // death egg "act 3" boss fight    
+    if (zoneAndAct == 0x1700)
+        return 1 + (12 * 2) // dez2
+    
+    if (zone >= 0x00 && zone <= 0x0c)
+        return act + (zone * 2)
+    
+	return 0xFFFF
+}
+
+// cannot override it breaks stuff
+function string getZoneActInitials2(u16 zoneAndAct)
+{
+    //if((zoneAndAct >> 8) == 0x03)
+    //    zoneAndAct = (zoneAndAct & 0xFF) | 0x0201 
+    // death egg "act 3" boss fight 
+    if(zoneAndAct == 0x1700)
+         zoneAndAct = (zoneAndAct & 0xFF) | 0x0b01 // clear zone and set death egg act 2
+
+    return getZoneActInitials(zoneAndAct)
+}
+
+// number of stripes per each act
+constant array<u32> ZoneLayers = 
+{
+    1, 1, // aiz
+    1, 1, // hcz
+    6, 6, // mgz
+    5, 5, // cnz
+    1, 1, // fbz (flying battery goes 5th)
+    1, 1, // icz
+    1, 1, // lbz
+    4, 4, // mhz
+    1, 1, // soz
+    1, 1, // lrz
+    1, 1, // ssz
+    1, 1, // dez
+    1, 1, // ddz
+    1, 1, // hpz (hidden palace is last)
+}
+
+// BG strip width(after scaling) per act
+constant array<u32> ZoneBGWidth = 
+{
+    /* Act 1 */ 400, /* Act 2 */ 400, // aiz
+    /* Act 1 */ 400, /* Act 2 */ 400, // hcz
+    /* Act 1 */ 400, 400, 400, 400, 400, 400, /* Act 2 */ 400, 400, 400, 400, 400, 400, // mgz
+    /* Act 1 */ 400, 400, 800, 800, 800, /* Act 2 */  400, 400, 800, 800, 800, // cnz
+    /* Act 1 */ 400, /* Act 2 */ 400, // fbz (flying battery goes 5th)
+    /* Act 1 */ 400, /* Act 2 */ 400, // icz
+    /* Act 1 */ 400, /* Act 2 */ 400, // lbz
+    /* Act 1 */ 400, 400, 400, 400, /* Act 2 */ 400, 400, 400, 400, // mhz
+    /* Act 1 */ 400, /* Act 2 */ 400, // soz
+    /* Act 1 */ 400, /* Act 2 */ 400, // lrz
+    /* Act 1 */ 400, /* Act 2 */ 400, // ssz
+    /* Act 1 */ 400, /* Act 2 */ 400, // dez
+    /* Act 1 */ 400, /* Act 2 */ 400, // ddz
+    /* Act 1 */ 400, /* Act 2 */ 400, // hpz (hidden palace is last)
+}
+
+// TODO: implement vertical scrolling
+// Height of the BG scene per act (bounds of vertical scrolling) 
+constant array<u32> ZoneBGHeight = 
+{
+    /* Act 1 */ 224, /* Act 2 */ 224, // aiz
+    /* Act 1 */ 224, /* Act 2 */ 224, // hcz
+    /* Act 1 */ 224, /* Act 2 */ 224, // mgz
+    /* Act 1 */ 224, /* Act 2 */ 224, // cnz
+    /* Act 1 */ 224, /* Act 2 */ 224, // fbz (flying battery goes 5th)
+    /* Act 1 */ 224, /* Act 2 */ 224, // icz
+    /* Act 1 */ 224, /* Act 2 */ 224, // lbz
+    /* Act 1 */ 224, /* Act 2 */ 224, // mhz
+    /* Act 1 */ 224, /* Act 2 */ 224, // soz
+    /* Act 1 */ 224, /* Act 2 */ 224, // lrz
+    /* Act 1 */ 224, /* Act 2 */ 224, // ssz
+    /* Act 1 */ 224, /* Act 2 */ 224, // dez
+    /* Act 1 */ 224, /* Act 2 */ 224, // ddz
+    /* Act 1 */ 224, /* Act 2 */ 224, // hpz (hidden palace is last)
+}
+
+// Use link below to calculate these
+// https://chummersone.github.io/qformat.html (put in 32 bit word size and 16 bit fractional bits)
+// Scale factor SHALL BE the same for each strip in the background set
+// BG layer 16.16 fixed point scale factor for X (resize your non 400x224 bgs here)
+constant array<s32> ZoneBGScaleX = 
+{
+    0x10000, 0x10000, // aiz
+    0x10000, 0x10000, // hcz
+    0x17878 /*1,470588235 (400 / 272)*/, 0x17878, // mgz
+    0x17878, 0x17878, // cnz
+    0x10000, 0x10000, // fbz (flying battery goes 5th)
+    0x10000, 0x10000, // icz
+    0x10000, 0x10000, // lbz
+    0x17878, 0x17878, // mhz
+    0x10000, 0x10000, // soz
+    0x10000, 0x10000, // lrz
+    0x10000, 0x10000, // ssz
+    0x10000, 0x10000, // dez
+    0x10000, 0x10000, // ddz
+    0x10000, 0x10000, // hpz (hidden palace is last)
+}
+
+// BG layer 16.16 fixed point scale factor for Y
+constant array<s32> ZoneBGScaleY = 
+{
+    0x10000, 0x10000, // aiz
+    0x10000, 0x10000, // hcz
+    0x16666 /*1.4 (224 / 160)*/, 0x16666, // mgz
+    0x16666, 0x16666, // cnz
+    0x10000, 0x10000, // fbz (flying battery goes 5th)
+    0x10000, 0x10000, // icz
+    0x10000, 0x10000, // lbz
+    0x16666, 0x16666, // mhz
+    0x10000, 0x10000, // soz
+    0x10000, 0x10000, // lrz
+    0x10000, 0x10000, // ssz
+    0x10000, 0x10000, // dez
+    0x10000, 0x10000, // ddz
+    0x10000, 0x10000, // hpz (hidden palace is last)
+}
+
+// background slice scroll speed
+// 16.16 fixed point (65536 == 1.0, 0x10000 == 1.0 etc)
+// 'normal' scroll speed that goes with sonic is 1 / 16 of a camera movement(0x1000)
+constant array<s32> ScrollSpeeds = 
+{
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // aiz
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // hcz
+    /* Act 1 */ 0, 0x2000, 0x1000, 0x2000, 0x4000, 0x8000, /* Act 2 */ 0, 0x2000, 0x1000, 0x2000, 0x4000, 0x8000, // mgz
+    /* Act 1 */ 0x0000, 0x1000, 0x2000, 0x4000, 0x8000, /* Act 2 */ 0x0000, 0x1000, 0x2000, 0x4000, 0x8000, // cnz
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // fbz
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // icz
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // lbz
+    /* Act 1 */ 0x1000, 0x2000, 0x4000, 0x8000, /* Act 2 */ 0x1000, 0x2000, 0x4000, 0x8000, // mhz
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // soz
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // lrz
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // ssz
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // dez
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // ddz
+    /* Act 1 */ 0x1000, /* Act 2 */ 0x1000, // hpz
+}
+
+// vertical positions of background strips (0 is top of the screen)
+constant array<u32> VPos = 
+{
+    /* Act 1 */ 0, /* Act 2 */ 0, // aiz
+    /* Act 1 */ 0, /* Act 2 */ 0, // hcz
+    /* Act 1 */ 0, 0, 0, 0, 0, 0, /* Act 2 */ 0, 0, 0, 0, 0, 0, // mgz
+    /* Act 1 */ 0, 0, 0, 0, 0, /* Act 2 */ 0, 0, 0, 0, 0, // cnz
+    /* Act 1 */ 0, /* Act 2 */ 0, // fbz
+    /* Act 1 */ 0, /* Act 2 */ 0, // icz
+    /* Act 1 */ 0, /* Act 2 */ 0, // lbz
+    /* Act 1 */ 0, 0, 0, 0, /* Act 2 */ 0, 0, 0, 0, // mhz
+    /* Act 1 */ 0, /* Act 2 */ 0, // soz
+    /* Act 1 */ 0, /* Act 2 */ 0, // lrz
+    /* Act 1 */ 0, /* Act 2 */ 0, // ssz
+    /* Act 1 */ 0, /* Act 2 */ 0, // dez
+    /* Act 1 */ 0, /* Act 2 */ 0, // ddz
+    /* Act 1 */ 0, /* Act 2 */ 0, // hpz
+}
+
+// calculates starting index that belongs to the given bg in the sparse array
+function u32 ZoneLayerActOffset(u8 index)
+{
+    u32 sum = 0
+    for(u16 i = 0; i < index; ++i)
+        sum += ZoneLayers[i]
+
+    return sum
+}
+
+function double fixed16_16Float(s32 x)
+{
+    double one65535th = 0.000015259
+    double a = x
+    a = a * one65535th
+
+    return a
+}
+
+function void DrawDemBgs()
+{
+    s16 bgID = getZoneActBG(global.zone_act)
+
+    if(bgID < 0)
+        return
+
+    u32 layerID = ZoneLayerActOffset(bgID)
+    u64 zoneAct = getZoneActInitials2(global.zone_act)
+    u32 layersQty = ZoneLayers[bgID]
+
+    s32 layerScaleX = ZoneBGScaleX[bgID]
+    s32 layerScaleY = ZoneBGScaleY[bgID]
+
+    //Renderer.enableDefaultPlane(0, 0)
+    //Renderer.enableDefaultPlane(1, 0)
+
+    u8 tickled = 0
+
+    for (u16 i = 0; i < layersQty; ++i)
+    {
+        u64 key = stringformat("%s_%d", zoneAct, i + 1)
+        if(!Renderer.hasCustomSprite(key))
+            continue
+
+        if(!tickled) 
+            Renderer.enableDefaultPlane(0, tickled++)
+
+        u32 stripID = layerID + i
+        u32 layerWidth = ZoneBGWidth[stripID]
+        
+        u32 cameraX = (camera.foreground.x >> 16)
+        //debugLog("cameraX")
+        //debugLog(cameraX) 
+        double fScroll = cameraX * fixed16_16Float(ScrollSpeeds[stripID])
+        //debugLog("fScroll")
+        //debugLog(fScroll)         
+        // reversed to scroll opposite of camera movement
+        u64 Xoffset = layerWidth - Math.roundToInt(fScroll % layerWidth)
+        //debugLog("Xoffset")
+        //debugLog(stringformat("%d", Xoffset))
+
+        //debugLog("ScrollSpeed")
+        //debugLog(ScrollSpeeds[stripID])
+
+
+        u32 renderOrder = 0x1000 + i
+
+        u32 offset1 = Xoffset - layerWidth
+        u32 offset2 = Xoffset
+            
+        Renderer.drawSpriteTinted(key, offset1, VPos[stripID], 0, 0x00, renderOrder, 0, 0xFFFFFFFF, layerScaleX, layerScaleY)
+        Renderer.drawSpriteTinted(key, offset2, VPos[stripID], 0, 0x00, renderOrder, 0, 0xFFFFFFFF, layerScaleX, layerScaleY)
+    }
+}
