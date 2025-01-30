@@ -18,3 +18,8 @@ Use in your own published mods at your own discretion
 - Marble Garden Act 2 earthquake sequence has level foreground tiles with hardcoded green color(in vanilla too)
 - Marble Garden Act 2 boss fight has zero scrolling due to camera.x position being still
 - Flying Battery Act 2 after lazer boss sequence has vanilla bg overriding the custom one
+
+# Current Parallax bg list:
+- Marble Garden Zone
+- Carnival Night Zone
+- Mushroom Hill Zone
